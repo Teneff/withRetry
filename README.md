@@ -18,6 +18,12 @@ Type: `Error[]` **(default: `[Error]`)**
 
 Specifies an array of errors for which the function should be retried. If the default option is used it will be retried for every error.
 
+### options.delay
+
+Type: `number` **(default: 0)**
+
+Specifies amount of delay before each retry.
+
 ## Examples:
 
 ### as Babel [legacy decorator][legacy]
