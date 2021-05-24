@@ -1,10 +1,9 @@
 import { ResourceExhaustedError } from "./ResourceExhaustedError";
 import { Settings } from "./Settings";
 
- type WithRetry = <T, Y extends unknown[]>(
+type WithRetry = <T, Y extends unknown[]>(
   callback: (...args: Y) => Promise<T>
 ) => (...args: Y) => Promise<T>;
-
 
 const defaults: Settings = {
   maxCalls: 2,
@@ -29,15 +28,23 @@ export function withRetry(options: Partial<Settings> = {}): WithRetry {
       do {
         try {
           return await callback(...args);
-        } catch (err) {
-          errors.push(err);
-          if (!settings.errors.some((error) => err instanceof error)) {
-            throw err;
+        } catch (error) {
+          errors.push(error);
+          if (!settings.errors.some((errorConstructor) => error instanceof errorConstructor)) {
+            throw error;
           }
-          settings.delay && await sleep(settings.delay)
-          maxCalls--;
+          if (--maxCalls && settings.delay) {
+            await (typeof settings.delay === "number"
+              ? sleep(settings.delay)
+              : sleep(
+                  settings.delay({
+                    call: settings.maxCalls - maxCalls,
+                    errors,
+                  })
+                ));
+          }
         }
-      } while (maxCalls >= 1);
+      } while (maxCalls);
       throw new ResourceExhaustedError(errors);
     };
   };

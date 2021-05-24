@@ -20,9 +20,12 @@ Specifies an array of errors for which the function should be retried. If the de
 
 ### options.delay
 
-Type: `number` **(default: 0)**
+Type: `number | ({ call: number; errors: Error[] }) => number` **(default: 0)**
 
 Specifies amount of delay before each retry.
+
+- If a `number` is given after each Error the subsequent invocation will be delayed with a fixed amount.
+- If a `function` returning `number` is given it will invoke the function and delay the invocations by the result
 
 ## Examples:
 
