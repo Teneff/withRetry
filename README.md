@@ -1,6 +1,12 @@
-# @teneff/withRetry
+# @teneff/with-retry
 
-Legacy decorator for retrying async functions
+Retry async functions when error happens
+
+[![NPM version][npm-img-latest]][npm-url]
+[![Build Status][build-img]][build-url]
+[![Coverage Status][coverage-image]][coverage-url]
+[![GitHub issues][issues-image]][issues-url]
+[![GitHub stars][github-stars-img]][github-stars-url]
 
 ## Options
 
@@ -31,11 +37,11 @@ Specifies amount of delay before each retry.
 
 ### as Babel [legacy decorator][legacy]
 
-#### using [got][got]
+#### on request timeout using [got][got]
 
 ```javascript
 import got from 'got'
-import withRetry from '@teneff/withRetry/legacy'
+import withRetry from '@teneff/with-retry/legacy'
 
 @withRetry({
     maxCalls: 5,
@@ -52,7 +58,7 @@ export default function getFlakyServiceData() {
 
 ```javascript
 import got from "got";
-import withRetry from "@teneff/withRetry/legacy";
+import withRetry from "@teneff/with-retry";
 
 function getFlakyServiceData() {
   return await got("https://example.com");
@@ -64,6 +70,31 @@ export default withRetry({
 })(getFlakyServiceData);
 ```
 
+### as an experimental decorator
+
+```javascript
+import withRetry from '@teneff/with-retry/decorator'
+class Example
+  @withRetry({
+    maxCalls: 5,
+    errors: [got.TimeoutError],
+  })
+  getFlakyServiceData() {
+    return await got("https://example.com");
+  }
+}
+```
+
 [got]: http://npmjs.com/package/got
-[adyen]: http://npmjs.com/package/adyen
 [legacy]: https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
+[npm-img-latest]: https://img.shields.io/npm/v/@teneff/with-retry/latest.svg?logo=npm&style=flat
+[npm-img-next]: https://img.shields.io/npm/v/@teneff/with-retry/next.svg?logo=npm&style=flat
+[npm-url]: https://www.npmjs.com/package/@teneff/with-retry
+[build-img]: https://github.com/teneff/withRetry/actions/workflows/master.yml/badge.svg?branch=master
+[build-url]: https://github.com/teneff/withRetry/actions?query=branch%3Amaster
+[coverage-image]: https://img.shields.io/codecov/c/github/Teneff/withRetry/master.svg?logo=codecov&style=flat
+[coverage-url]: https://codecov.io/gh/Teneff/withRetry/branch/master
+[issues-image]: https://img.shields.io/github/issues/Teneff/withRetry/bug.svg?logo=github&style=flat
+[issues-url]: https://github.com/teneff/withRetry/issues
+[github-stars-img]: https://img.shields.io/github/stars/teneff/withRetry.svg?logo=github&logoColor=fff
+[github-stars-url]: https://github.com/teneff/withRetry/stargazers
