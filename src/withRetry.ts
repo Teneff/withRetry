@@ -1,41 +1,59 @@
-import { Constructor } from "./Constructor";
+import { ResourceExhaustedError } from "./ResourceExhaustedError";
+import { Settings } from "./Settings";
 
-export type Settings = {
-  maxCalls: number;
-  errors: Constructor<Error>[];
-};
+type WithRetry = <T, Y extends unknown[]>(
+  callback: (...args: Y) => Promise<T>
+) => (...args: Y) => Promise<T>;
 
-const defaults: Settings = {
+const defaults = {
   maxCalls: 2,
-  errors: [Error],
+  errors: [],
+  delay: 0,
 };
 
-type AsyncFn = (...args: any[]) => Promise<any>;
+const sleep = async (intervalMs: number): Promise<void> =>
+  await new Promise((resolve) => setTimeout(() => resolve(), intervalMs));
 
-type WithRetry = (callback: AsyncFn) => AsyncFn;
+export default function withRetry<E extends Error>(
+  options: Partial<Settings<E>> = {}
+): WithRetry {
+  const settings: Settings<E> = { ...defaults, ...options };
 
-type Await<T> = T extends Promise<infer R> ? R : never;
+  return <T, Y extends unknown[]>(
+    callback: (...args: Y) => Promise<T>
+  ): ((...args: Y) => Promise<T>) => {
+    let { maxCalls } = settings;
+    const errors: E[] = [];
 
-export function withRetry(options: Partial<Settings> = {}): WithRetry {
-  const settings: Settings = { ...defaults, ...options };
-  return function <CB extends (...args: any[]) => any>(callback: CB) {
-    return async <A extends Parameters<CB>>(
-      ...args: A
-    ): Promise<Await<ReturnType<CB>>> => {
-      try {
-        return await callback(...args);
-      } catch (err) {
-        if (
-          settings.maxCalls <= 1 ||
-          !settings.errors.some((error) => err instanceof error)
-        ) {
-          throw err;
+    return async (
+      ...args: Parameters<typeof callback>
+    ): ReturnType<typeof callback> => {
+      do {
+        try {
+          return await callback(...args);
+        } catch (error) {
+          errors.push(error);
+          if (
+            settings.errors.length &&
+            !settings.errors.some(
+              (errorConstructor) => error instanceof errorConstructor
+            )
+          ) {
+            throw error;
+          }
+          if (maxCalls > 1 && settings.delay) {
+            await (typeof settings.delay === "number"
+              ? sleep(settings.delay)
+              : sleep(
+                  settings.delay({
+                    call: settings.maxCalls - maxCalls,
+                    errors: Array.from(errors),
+                  })
+                ));
+          }
         }
-        return await withRetry({
-          ...settings,
-          maxCalls: settings.maxCalls - 1,
-        })(callback)(...args);
-      }
+      } while (--maxCalls);
+      throw new ResourceExhaustedError(errors);
     };
   };
 }

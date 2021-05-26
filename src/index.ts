@@ -1,5 +1,2 @@
-import { withRetry } from "./withRetry";
-
-export { withRetry };
-
-export default withRetry;
+export { ResourceExhaustedError } from "./ResourceExhaustedError";
+export { default } from "./withRetry";
