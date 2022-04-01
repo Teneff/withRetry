@@ -1,2 +1,3 @@
-export { ResourceExhaustedError } from "./ResourceExhaustedError";
 export { default } from "./withRetry";
+export { UnknownError } from "./UnknownError";
+export { ResourceExhaustedError } from "./ResourceExhaustedError";
