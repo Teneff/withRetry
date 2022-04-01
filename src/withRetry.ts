@@ -1,5 +1,6 @@
-import { ResourceExhaustedError } from "./ResourceExhaustedError";
 import { Settings } from "./Settings";
+import { UnknownError } from "./UnknownError";
+import { ResourceExhaustedError } from "./ResourceExhaustedError";
 
 type WithRetry = <T, Y extends unknown[]>(
   callback: (...args: Y) => Promise<T>
@@ -14,16 +15,16 @@ const defaults = {
 const sleep = async (intervalMs: number): Promise<void> =>
   await new Promise((resolve) => setTimeout(() => resolve(), intervalMs));
 
-export default function withRetry<E extends Error>(
-  options: Partial<Settings<E>> = {}
+export default function withRetry(
+  options: Partial<Settings<Error>> = {}
 ): WithRetry {
-  const settings: Settings<E> = { ...defaults, ...options };
+  const settings: Settings<Error> = { ...defaults, ...options };
 
   return <T, Y extends unknown[]>(
     callback: (...args: Y) => Promise<T>
   ): ((...args: Y) => Promise<T>) => {
     let { maxCalls } = settings;
-    const errors: E[] = [];
+    const errors: Error[] = [];
 
     return async (
       ...args: Parameters<typeof callback>
@@ -32,14 +33,17 @@ export default function withRetry<E extends Error>(
         try {
           return await callback(...args);
         } catch (error) {
-          errors.push(error);
+          const e = error instanceof Error ? error : new UnknownError(error);
+
+          errors.push(e);
+
           if (
             settings.errors.length &&
             !settings.errors.some(
-              (errorConstructor) => error instanceof errorConstructor
+              (errorConstructor) => e instanceof errorConstructor
             )
           ) {
-            throw error;
+            throw e;
           }
           if (maxCalls > 1 && settings.delay) {
             await (typeof settings.delay === "number"

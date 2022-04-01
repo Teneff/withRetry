@@ -1,4 +1,4 @@
-import withRetry, { ResourceExhaustedError } from ".";
+import withRetry, { ResourceExhaustedError, UnknownError } from ".";
 
 jest.useFakeTimers();
 
@@ -291,6 +291,22 @@ Array [
           });
         });
       });
+    });
+  });
+
+  describe("given a function that throws non-Errors", () => {
+    const mockFn = jest.fn().mockRejectedValue("non-Error");
+    beforeAll(async () => {
+      const callbackWithRetry = withRetry({
+        maxCalls: 4,
+        errors: [UnknownError],
+      })(mockFn);
+      
+      await callbackWithRetry("arg1", "arg2").catch(() => undefined);
+    });
+
+    it("should have called the function 4 times", () => {
+      expect(mockFn).toHaveBeenCalledTimes(4)
     });
   });
 });

@@ -87,6 +87,21 @@ class Example
 }
 ```
 
+### v1.1.0
+Adds support for unknown errors
+
+```javascript
+import withRetry, { UnknownError } from '@teneff/with-retry'
+
+function resolvesPromiseWithNonError() {
+  return Promise.reject('a string')
+}
+
+await withRetry({
+  errors: UnknownError
+})(resolvesPromiseWithNonError)()
+```
+
 [got]: http://npmjs.com/package/got
 [legacy]: https://babeljs.io/docs/en/babel-plugin-proposal-decorators#legacy
 [npm-img-latest]: https://img.shields.io/npm/v/@teneff/with-retry/latest.svg?logo=npm&style=flat
