@@ -21,7 +21,7 @@
         "**/?(*.)+(spec|test).[tj]s?(x)"
       ],
       "plugins": ["jest"],
-      "extends": ["plugin:jest/recommended"]
+      "extends": ["plugin:@typescript-eslint/recommended", "plugin:jest/recommended"]
     }
   ]
 }
