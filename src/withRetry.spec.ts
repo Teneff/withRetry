@@ -256,28 +256,28 @@ describe("withRetry", () => {
             describe("options.delay function", () => {
               it("should be called with", () => {
                 expect(delayFn.mock.calls).toMatchInlineSnapshot(`
-Array [
-  Array [
-    Object {
+[
+  [
+    {
       "call": 0,
-      "errors": Array [
+      "errors": [
         [Error: subsequent error],
       ],
     },
   ],
-  Array [
-    Object {
+  [
+    {
       "call": 1,
-      "errors": Array [
+      "errors": [
         [Error: subsequent error],
         [Error: subsequent error],
       ],
     },
   ],
-  Array [
-    Object {
+  [
+    {
       "call": 2,
-      "errors": Array [
+      "errors": [
         [Error: subsequent error],
         [Error: subsequent error],
         [Error: subsequent error],
