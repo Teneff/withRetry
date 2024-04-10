@@ -176,9 +176,12 @@ describe("withRetry", () => {
   });
 
   describe("given function delay", () => {
-    const mockCallback = jest.fn<Promise<string>, [string, string]>(() => {
-      throw new Error("subsequent error");
-    });
+    const mockCallback = jest
+      .fn<Promise<string>, [string, string]>()
+      .mockRejectedValueOnce(new Error("first error"))
+      .mockRejectedValueOnce(new Error("second error"))
+      .mockRejectedValueOnce(new Error("third error"))
+      .mockRejectedValueOnce(new Error("fourth error"));
 
     let result: Promise<string>;
 
@@ -249,43 +252,76 @@ describe("withRetry", () => {
             it("should contain previous errors", async () => {
               await expect(result).rejects.toHaveProperty(
                 "cause",
-                new Array(4).fill(expect.any(Error))
+                [
+                  expect.objectContaining({
+                    constructor: Error,
+                    message: "first error",
+                  }),
+                  expect.objectContaining({
+                    constructor: Error,
+                    message: "second error",
+                  }),
+                  expect.objectContaining({
+                    constructor: Error,
+                    message: "third error",
+                  }),
+                  expect.objectContaining({
+                    constructor: Error,
+                    message: "fourth error",
+                  }),
+                ]
               );
             });
 
             describe("options.delay function", () => {
               it("should be called with", () => {
-                expect(delayFn.mock.calls).toMatchInlineSnapshot(`
-[
-  [
-    {
-      "call": 0,
-      "errors": [
-        [Error: subsequent error],
-      ],
-    },
-  ],
-  [
-    {
-      "call": 1,
-      "errors": [
-        [Error: subsequent error],
-        [Error: subsequent error],
-      ],
-    },
-  ],
-  [
-    {
-      "call": 2,
-      "errors": [
-        [Error: subsequent error],
-        [Error: subsequent error],
-        [Error: subsequent error],
-      ],
-    },
-  ],
-]
-`);
+                expect(delayFn.mock.calls).toEqual([
+                  [
+                    {
+                      call: 0,
+                      errors: [
+                        expect.objectContaining({
+                          constructor: Error,
+                          message: "first error",
+                        }),
+                      ],
+                    },
+                  ],
+                  [
+                    {
+                      call: 1,
+                      errors: [
+                        expect.objectContaining({
+                          constructor: Error,
+                          message: "first error",
+                        }),
+                        expect.objectContaining({
+                          constructor: Error,
+                          message: "second error",
+                        }),
+                      ],
+                    },
+                  ],
+                  [
+                    {
+                      call: 2,
+                      errors: [
+                        expect.objectContaining({
+                          constructor: Error,
+                          message: "first error",
+                        }),
+                        expect.objectContaining({
+                          constructor: Error,
+                          message: "second error",
+                        }),
+                        expect.objectContaining({
+                          constructor: Error,
+                          message: "third error",
+                        }),
+                      ],
+                    },
+                  ],
+                ]);
               });
             });
           });
@@ -295,18 +331,54 @@ describe("withRetry", () => {
   });
 
   describe("given a function that throws non-Errors", () => {
-    const mockFn = jest.fn().mockRejectedValue("non-Error");
+    const mockFn = jest
+      .fn()
+      .mockRejectedValue("additional error")
+      .mockRejectedValueOnce("first fail")
+      .mockRejectedValueOnce("second fail")
+      .mockRejectedValueOnce("third fail")
+      .mockRejectedValueOnce("fourth fail");
+
+    let result: Promise<unknown>;
     beforeAll(async () => {
       const callbackWithRetry = withRetry({
         maxCalls: 4,
         errors: [UnknownError],
       })(mockFn);
-      
-      await callbackWithRetry("arg1", "arg2").catch(() => undefined);
+
+      result = callbackWithRetry("arg1", "arg2");
+      try {
+        await result;
+      } catch {}
     });
 
     it("should have called the function 4 times", () => {
-      expect(mockFn).toHaveBeenCalledTimes(4)
+      expect(mockFn).toHaveBeenCalledTimes(4);
+    });
+
+    it("should fail with ResourceExhaustedError containing all internal errors", async () => {
+      await expect(result).rejects.toHaveProperty("cause", [
+        expect.objectContaining({
+          constructor: UnknownError,
+          message: "Unknown error",
+          unknown: "first fail",
+        }),
+        expect.objectContaining({
+          constructor: UnknownError,
+          message: "Unknown error",
+          unknown: "second fail",
+        }),
+        expect.objectContaining({
+          constructor: UnknownError,
+          message: "Unknown error",
+          unknown: "third fail",
+        }),
+        expect.objectContaining({
+          constructor: UnknownError,
+          message: "Unknown error",
+          unknown: "fourth fail",
+        }),
+      ]);
     });
   });
 });
