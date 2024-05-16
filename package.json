@@ -6,9 +6,10 @@
   "types": "index.d.ts",
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint src",
     "test": "jest",
+    "typecheck": "yarn build --noEmit -p tsconfig.jest.json",
     "codecov": "codecov",
     "postbuild": "cp package.json dist; cp README.md dist"
   },
