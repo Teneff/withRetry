@@ -26,12 +26,13 @@ export default function withRetry(
     let { maxCalls } = settings;
     const errors: Error[] = [];
 
-    return async (
+    return async function (
+      this: any,
       ...args: Parameters<typeof callback>
-    ): ReturnType<typeof callback> => {
+    ): ReturnType<typeof callback> {
       do {
         try {
-          return await callback(...args);
+          return await callback.apply(this, args);
         } catch (error) {
           const e = error instanceof Error ? error : new UnknownError(error);
 
