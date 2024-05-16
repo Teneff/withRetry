@@ -88,18 +88,39 @@ class Example
 ```
 
 ### v1.1.0
+
 Adds support for unknown errors
 
 ```javascript
-import withRetry, { UnknownError } from '@teneff/with-retry'
+import withRetry, { UnknownError } from "@teneff/with-retry";
 
 function resolvesPromiseWithNonError() {
-  return Promise.reject('a string')
+  return Promise.reject("a string");
 }
 
 await withRetry({
-  errors: UnknownError
-})(resolvesPromiseWithNonError)()
+  errors: UnknownError,
+})(resolvesPromiseWithNonError)();
+```
+
+### v1.1.2
+
+Fixes issue [#6](https://github.com/Teneff/withRetry/issues/6) preserving class context
+
+```typescript
+class Example {
+  private mockCallback = jest
+    .fn()
+    .mockRejectedValueOnce(new Error(`[${num}] mock error`))
+    .mockResolvedValue(`[${num}] success`);
+
+  @withRetry({
+    maxCalls: 4,
+  })
+  getData2(): Promise<string> {
+    return this.mockCallback("arg1", "arg2");
+  }
+}
 ```
 
 [got]: http://npmjs.com/package/got
