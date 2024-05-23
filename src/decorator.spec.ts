@@ -30,6 +30,13 @@ class Example {
   getData2(): Promise<string> {
     return this.mockCallback("arg1", "arg2");
   }
+
+  @withRetry({
+    maxCalls: 4,
+  })
+  async getData3() {
+    console.log('3')
+  }
 }
 
 describe("decorator", () => {
